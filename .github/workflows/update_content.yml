@@ -1,45 +1,77 @@
-name: Update GitHub Pages Content # Action 的名字
+# 这个工作流的名字，会显示在 GitHub Actions 页面上
+name: Build and Deploy Website
 
+# --- 触发器：决定在什么情况下运行此工作流 ---
 on:
-  schedule:
-    # 使用 cron 语法，表示每小时运行一次 (在 0 分时)
-    # 你可以根据需要修改，例如每天运行一次 '0 0 * * *'
-    # 注意：这里是 UTC 时间
-    - cron: '0 * * * *'
-  workflow_dispatch: # 允许手动触发此 workflow
+  # 1. 当有代码被推送到 main 分支时
+  push:
+    branches:
+      - main
 
+  # 2. 定时运行：使用 cron 语法，这里设置为每小时的第 0 分运行一次
+  #    非常适合自动更新需要时效性的内容
+  #    注意：这是 UTC 时间，比北京时间晚8小时
+  schedule:
+    - cron: '0 * * * *'
+
+  # 3. 手动触发：允许你在 Actions 页面上手动点击按钮来运行
+  workflow_dispatch:
+
+# --- 任务：定义工作流具体要做的事情 ---
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest # 使用最新的 Ubuntu 运行环境
-    permissions:
-      contents: write # 必须给予 workflow 修改仓库内容的权限
-    steps:
-      - name: Checkout Repository # 第一步：签出（下载）你的仓库代码
-        uses: actions/checkout@v4 # 使用官方的 checkout action
+    # 指定运行环境为最新的 Ubuntu 系统
+    runs-on: ubuntu-latest
 
-      - name: Set up Python # 第二步：设置 Python 环境
+    # 权限设置：明确给予此工作流“写入仓库内容”的权限，这是安全最佳实践
+    permissions:
+      contents: write
+
+    # 步骤：按顺序执行的一系列操作
+    steps:
+      # 步骤 1: 检出代码
+      # 把你的仓库代码下载到 Actions 的运行环境中
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 步骤 2: 设置 Python 环境
+      # 安装指定版本的 Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x' # 使用 Python 3.x
+          python-version: '3.12' # 你可以根据需要修改版本，建议指定一个明确的版本
 
-      # 如果你的 Python 脚本有依赖，取消下面注释并创建 requirements.txt 文件
-      # - name: Install dependencies
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     pip install -r requirements.txt
-
-      - name: Run Python Script to Update Content # 第三步：运行你的 Python 脚本
-        run: python update_page.py # 运行你的脚本文件名
-
-      - name: Commit and Push Changes # 第四步：提交更改
+      # 步骤 3: 安装依赖
+      # 安装你的 Python 脚本 (update_page.py) 需要的库
+      - name: Install dependencies
         run: |
-          git config --global user.name 'github-actions[bot]' # 设置提交者名字
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com' # 设置提交者邮箱
-          # 检查是否有文件变动 (git status --porcelain)，如果有才执行 add, commit, push
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git add index.html # 添加被修改的文件 (或者 git add .)
-            git commit -m "Automated content update via GitHub Actions" # 提交信息
-            git push # 推送到 GitHub
-          else
+          python -m pip install --upgrade pip
+          pip install Jinja2
+
+      # 步骤 4: 运行构建脚本
+      # 执行你的 update_page.py 来生成最新的网站文件 (index.html, style.css, script.js)
+      - name: Run build script
+        run: python update_page.py
+
+      # 步骤 5: 提交并推送生成的文件
+      # 模拟人工操作，将变动提交回你的 GitHub 仓库
+      - name: Commit and Push changes
+        run: |
+          # 配置 Git 的用户身份，表明这是由机器人提交的
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # 检查是否有文件变动。如果脚本运行后没有任何文件改变，就跳过提交
+          if [[ -z "$(git status --porcelain)" ]]; then
             echo "No changes to commit."
+          else
+            # 将所有变动的文件（包括新增、修改、删除）添加到暂存区
+            # 这是关键的修改，确保 index.html, style.css, script.js 都能被提交
+            git add .
+            
+            # 创建提交，并附上一个清晰的提交信息
+            git commit -m "Automated build: Update website content via GitHub Actions"
+            
+            # 将新的提交推送回 main 分支
+            git push
           fi
