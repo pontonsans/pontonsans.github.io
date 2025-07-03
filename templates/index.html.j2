@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 模板变量：网页标题 -->
+    <title>{{ page_title }}</title>
+
+    <!-- 链接最终生成的 CSS 文件，路径是相对于最终的 index.html 的 -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>{{ welcome_message }}</h1>
+    <p>这个网站由 Python 和 Jinja2 模板动态生成。</p>
+    <p>上次构建时间：<strong>{{ build_time }}</strong></p>
+
+    <!-- 这是我们的 Tabs 组件 -->
+    <div class="tabs-container">
+
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="panel1">个人简介</button>
+            <button class="tab-button" data-tab="panel2">我的技能</button>
+            <button class="tab-button" data-tab="panel3">联系方式</button>
+        </div>
+
+        <div class="tab-content">
+
+            <div id="panel1" class="content-panel active">
+                <h2>关于我</h2>
+                <p>你好！我是一名正在学习 Web 开发的爱好者。我喜欢探索新技术，并用代码创造有趣的东西。</p>
+            </div>
+
+            <div id="panel2" class="content-panel">
+                <h2>我的技能</h2>
+                <!-- 模板循环：遍历一个列表 -->
+                <ul>
+                    {% for skill in skills_list %}
+                        <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div id="panel3" class="content-panel">
+                <h2>联系我</h2>
+                <p>你可以在 GitHub 上找到我：<a href="{{ github_url }}">{{ github_username }}</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 链接最终生成的 JS 文件 -->
+    <script src="script.js"></script>
+</body>
+</html>
